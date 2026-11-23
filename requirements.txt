@@ -1,0 +1,24 @@
+# Pinned versions, tested to resolve together on Python 3.11 (Windows, CPU only).
+# Pinning exact versions is part of the reproducibility requirement:
+# anyone who installs this file gets the same libraries we used.
+
+# Core numeric and data handling
+numpy==1.26.4
+scipy==1.14.1
+pandas==2.2.3
+
+# Models
+scikit-learn==1.5.2
+xgboost==2.1.3
+
+# Explainability (SHAP needs numba under the hood)
+shap==0.46.0
+numba==0.60.0
+
+# Plots
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# Notebook
+jupyterlab==4.2.5
+ipykernel==6.29.5

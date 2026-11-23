@@ -1,0 +1,28 @@
+# Raw and processed data are never versioned (course rule).
+# The .gitkeep files keep the empty folders in the repository.
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Jupyter autosave folders
+.ipynb_checkpoints/
+
+# Editor and OS files
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Saved models (can be large, and are rebuilt by running the notebook)
+*.joblib
+*.pkl
