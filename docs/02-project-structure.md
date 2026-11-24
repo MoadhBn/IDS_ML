@@ -21,7 +21,8 @@ ids-explainability/
 │   ├── models.py           pipelines, hyperparameter search, timing (phase 2)
 │   ├── cache.py            saving and reloading the searches (phase 2)
 │   ├── evaluation.py       threshold, metrics, curves, confusion matrices (phase 3)
-│   └── explain.py          importance measures and SHAP (phase 4)
+│   ├── explain.py          importance measures, SHAP, local explanations, host probe (phases 4 to 6)
+│   └── stability.py        retraining with other seeds and splits (phase 7)
 ├── models/                 cached searches and timings (not versioned)
 ├── scripts/
 │   ├── check_env.py        checks installed library versions
