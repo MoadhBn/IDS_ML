@@ -17,7 +17,8 @@ ids-explainability/
 │   ├── __init__.py
 │   ├── config.py           paths, random seed, column groups, SHAP limit
 │   ├── data.py             loading, cleaning and splitting (phase 1)
-│   └── preprocessing.py    one-hot encoding and scaling (phase 1)
+│   ├── preprocessing.py    one-hot encoding and scaling (phase 1)
+│   └── models.py           pipelines, hyperparameter search, timing (phase 2)
 ├── scripts/
 │   ├── check_env.py        checks installed library versions
 │   └── check_data.py       checks the downloaded files
