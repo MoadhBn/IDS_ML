@@ -86,8 +86,7 @@ git push
 
 ## What is left
 
-- The oral presentation: slides built from the figures in `reports/figures/`, and preparation for individual questions. The study guide (docs/project-guide.pdf) has a list of likely questions, but it still describes the project as it was after phase 1.
-- An updated version of the study guide, covering the results of all phases.
+- The oral presentation: slides built from the figures in `reports/figures/`, and preparation for individual questions. The study guide (docs/project-guide.pdf) was updated after this phase: it covers every phase's results and gives twenty likely oral questions with short answers.
 
 ## Checking it yourself
 

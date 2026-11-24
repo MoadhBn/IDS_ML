@@ -2,7 +2,7 @@
 
 One file per phase, in the order we worked. Each file explains what was done, why, and how to redo it.
 
-For a single read from start to finish, [project-guide.pdf](project-guide.pdf) gathers the subject, the concepts (metrics, models, SHAP), what has been done and the plan for the remaining phases. It reflects the state of the project after phase 1.
+For a single read from start to finish, [project-guide.pdf](project-guide.pdf) gathers the subject, the concepts (metrics, models, SHAP), what each phase found, the answer to the central question, the submission checklist and likely oral questions with short answers. It reflects the finished project (all phases).
 
 - [00 - Choosing the subject](00-choice-of-subject.md): the seven subjects compared, why subject 1 and why UNSW-NB15.
 - [01 - Preparing the working environment](01-environment-setup.md): Python, virtual environment, libraries, VS Code, checks.
