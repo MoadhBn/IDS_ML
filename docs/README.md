@@ -13,3 +13,4 @@ For a single read from start to finish, [project-guide.pdf](project-guide.pdf) g
 - [06 - Evaluating the models](06-evaluation.md): threshold choice, test results, why precision collapses on the test file, and the cost of errors.
 - [07 - What the model relies on: three importance measures](07-global-importance.md): internal, permutation and SHAP importance compared, the weight of the TTL features, and why the rankings differ.
 - [08 - Five alerts explained one by one](08-local-explanations.md): two true positives, two false positives and a false negative, with SHAP charts and analyst notes.
+- [09 - Auditing the top features and removing the suspicious ones](09-audit-and-ablation.md): the plausibility audit, the retraining without TTL, and the proof that the lab machines' identity is spread across many features.

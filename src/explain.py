@@ -220,6 +220,42 @@ def plot_waterfall(expl, title, filename=None, max_display=10):
 
 
 # ---------------------------------------------------------------------------
+# Is the "host group" hidden in the other features?
+# ---------------------------------------------------------------------------
+def host_group_probe(train_df, test_df, drop, seed=config.SEED):
+    """Can the features left after an ablation still tell which hosts sent a flow?
+
+    Trained on NORMAL training flows only, so that the attack label plays no
+    part. The target is whether the flow has sttl = 62 or 254 (the values all
+    attacks use) or another value. If the remaining features predict it
+    almost perfectly on the normal test flows, the host identity is still
+    available to any model, even without the TTL columns.
+
+    Returns (ROC-AUC, balanced accuracy, top features of the probe).
+    """
+    from sklearn.metrics import balanced_accuracy_score, roc_auc_score
+    from sklearn.pipeline import Pipeline
+    from xgboost import XGBClassifier
+    from src import data as D
+    from src.preprocessing import build_preprocessor, numeric_columns
+
+    def xy(df):
+        normal = df[df[config.TARGET] == 0]
+        X_ = normal[D.feature_columns(normal)].drop(columns=drop)
+        return X_, normal["sttl"].isin([62, 254]).astype(int)
+
+    Xa, ya = xy(train_df)
+    Xb, yb = xy(test_df)
+    probe = Pipeline([("prep", build_preprocessor(numeric_columns(Xa))),
+                      ("model", XGBClassifier(n_estimators=200, max_depth=6, n_jobs=-1, random_state=seed))])
+    probe.fit(Xa, ya)
+    s = probe.predict_proba(Xb)[:, 1]
+    imp = group_columns(probe.named_steps["model"].feature_importances_, probe).iloc[0]
+    return (roc_auc_score(yb, s), balanced_accuracy_score(yb, s >= 0.5),
+            imp.sort_values(ascending=False))
+
+
+# ---------------------------------------------------------------------------
 # Comparing the rankings
 # ---------------------------------------------------------------------------
 def ranking_table(measures, top=15):

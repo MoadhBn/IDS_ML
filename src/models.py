@@ -154,6 +154,29 @@ def time_model_cached(name, estimator, X_fit, y_fit, X_pred):
     return result[0], result[1], from_cache
 
 
+def refit_without_cached(name, best_params, X, y, drop, tag, seed=config.SEED):
+    """Retrain one model without some features, keeping its tuned settings.
+
+    Used for the ablation: the hyperparameters found in section 3 are kept so
+    that the only change is the set of features. The preprocessing is rebuilt
+    for the remaining columns. `tag` names the variant in the cache file.
+    """
+    from src.preprocessing import numeric_columns
+    X_kept = X.drop(columns=drop)
+    pipeline = make_pipelines(numeric_columns(X_kept), seed)[name]
+    pipeline.set_params(**best_params)
+    key = cache.fingerprint("ablation", name, tuple(drop), cache.data_fingerprint(X_kept, y), repr(pipeline))
+
+    def compute():
+        # Parallel training only speeds things up; results do not depend on it.
+        if name != "Régression logistique":
+            pipeline.set_params(model__n_jobs=-1)
+        return pipeline.fit(X_kept, y)
+
+    model, _ = cache.load_or_compute(f"ablation_{tag}_{FILE_NAMES[name]}.joblib", key, compute)
+    return model
+
+
 def short_params(best_params):
     """Best settings without the 'model__' prefix, for display."""
     return {k.replace("model__", ""): v for k, v in best_params.items()}
