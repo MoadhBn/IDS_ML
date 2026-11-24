@@ -26,3 +26,7 @@ desktop.ini
 # Saved models (can be large, and are rebuilt by running the notebook)
 *.joblib
 *.pkl
+
+# Cached hyperparameter searches and timings (src/cache.py)
+models/*
+!models/.gitkeep

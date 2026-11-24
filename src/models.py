@@ -15,7 +15,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, Stratified
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
-from src import config
+from src import cache, config
 from src.preprocessing import build_preprocessor
 
 CV_FOLDS = 5
@@ -111,6 +111,47 @@ def time_model(estimator, X_fit, y_fit, X_pred, repeats=3):
         runs.append(time.perf_counter() - start)
     ms_per_1000 = min(runs) / len(X_pred) * 1000 * 1000
     return fit_seconds, ms_per_1000
+
+
+# ---------------------------------------------------------------------------
+# Cached versions (see src/cache.py)
+# ---------------------------------------------------------------------------
+FILE_NAMES = {
+    "Régression logistique": "logistic_regression",
+    "Forêt aléatoire": "random_forest",
+    "XGBoost": "xgboost",
+}
+
+
+def tune_cached(name, pipeline, X, y, seed=config.SEED):
+    """Same as `tune`, but reuses the saved search when nothing has changed.
+
+    Returns (search, search_seconds, from_cache). `search_seconds` is the
+    duration of the run that actually did the search.
+    """
+    key = cache.fingerprint("search", name, cache.data_fingerprint(X, y), SEARCH_SPACES[name],
+                            CV_FOLDS, N_ITER, SCORING, seed, repr(pipeline))
+
+    def compute():
+        start = time.perf_counter()
+        search = tune(name, pipeline, X, y, seed)
+        return {"search": search, "seconds": time.perf_counter() - start}
+
+    result, from_cache = cache.load_or_compute(f"search_{FILE_NAMES[name]}.joblib", key, compute)
+    return result["search"], result["seconds"], from_cache
+
+
+def time_model_cached(name, estimator, X_fit, y_fit, X_pred):
+    """Same as `time_model`, but reuses the saved timings when nothing has changed.
+
+    Timings reloaded from the cache are those measured on the run that
+    produced them.
+    """
+    key = cache.fingerprint("timing", name, cache.data_fingerprint(X_fit, y_fit),
+                            cache.data_fingerprint(X_pred, y_fit.iloc[:0]), repr(estimator))
+    result, from_cache = cache.load_or_compute(
+        f"timing_{FILE_NAMES[name]}.joblib", key, lambda: time_model(estimator, X_fit, y_fit, X_pred))
+    return result[0], result[1], from_cache
 
 
 def short_params(best_params):

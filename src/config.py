@@ -34,6 +34,12 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_RAW = ROOT / "data" / "raw"
 DATA_PROCESSED = ROOT / "data" / "processed"
 FIGURES = ROOT / "reports" / "figures"
+MODELS_DIR = ROOT / "models"  # cached searches and timings (not versioned)
+
+# False: reuse the cached hyperparameter searches when their inputs have not
+# changed (see src/cache.py). True: redo every search from scratch. Set it to
+# True for the final run before submission.
+RETUNE = False
 
 # Official UNSW-NB15 partition files (see data/README.md to download them).
 # Note: the "training-set" file is the larger one (~175k rows) and the

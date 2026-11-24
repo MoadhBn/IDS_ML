@@ -47,7 +47,13 @@ Performance, with PR-AUC first as cross-validation mean (and standard deviation 
 - forest: 0.9845 (± 0.0009), validation 0.9850, F1 0.933;
 - XGBoost: 0.9853 (± 0.0010), validation 0.9852, F1 0.934.
 
-Cost, measured on one core: logistic regression trains in about 11 seconds and predicts 1,000 flows in 3.4 ms. The forest needs about 208 seconds and 35 ms. XGBoost needs about 15 seconds and 10 ms.
+Cost, measured on one core, on two complete runs of the notebook the same day (first run, then second run):
+
+- logistic regression: training 11.4 s then 5.3 s; prediction of 1,000 flows 3.4 ms then 1.5 ms;
+- forest: training 208 s then 120 s; prediction 35 ms then 17 ms;
+- XGBoost: training 15.1 s then 14.0 s; prediction 9.9 ms then 19.3 ms.
+
+The second run is the one saved in the cache, so its numbers are the ones the notebook shows.
 
 For reference, a model that ranks flows at random would get a PR-AUC of 0.488 on validation, the share of attacks there.
 
@@ -61,7 +67,9 @@ For reference, a model that ranks flows at random would get a PR-AUC of 0.488 on
 
 **The forest and XGBoost cannot be separated on performance.** They differ by 0.0002 on validation, which is smaller than the variation between folds (about 0.001). Saying one is better would be reading noise. XGBoost's best depth, 10, is also the largest we allowed. Allowing deeper trees might gain a few thousandths, but with the two models already this close it would not change any conclusion. We note it as a limit rather than rerun a 35-minute search.
 
-**They do differ on cost.** The forest trains about fourteen times slower than XGBoost and predicts about three times slower. All three remain fast enough for near real-time detection: even the forest handles one flow in well under a tenth of a millisecond. Timings depend on the machine; the ratios between models are what to compare.
+**They differ on training cost, not on prediction cost.** Timings moved a lot between the two runs, sometimes by a factor of two, because other programs on the laptop compete for the processor. So we only keep what held both times. The forest is always by far the slowest to train, eight to fourteen times slower than XGBoost. For prediction, the forest and XGBoost are in the same range, and their order flipped between the two runs: the forest was slower the first time, XGBoost the second. We therefore draw no conclusion on prediction speed between them. All three remain fast enough for near real-time detection, at under 0.05 ms per flow.
+
+This is a small lesson in itself. After the first run we had written that XGBoost predicts three times faster than the forest. A second measurement showed that the difference was noise. A timing taken once on a laptop is a rough indication, not a result.
 
 ## Why these scores should make us suspicious
 
@@ -69,8 +77,38 @@ A PR-AUC of 0.985 looks excellent. Subject 1 exists precisely to question number
 
 ## Running time
 
-The whole notebook now takes about 35 minutes. Most of it is the forest search (23 minutes), because some of the combinations it draws are heavy (400 trees using half the features at each split, on one core each). XGBoost's search takes about 5 minutes and logistic regression's under a minute. Timing the forest once more for the comparison table adds about 3.5 minutes.
+A full run of the notebook took about 35 minutes the first time and 20 minutes the second, depending on what else the laptop was doing. Most of it is the forest search (23 then 14 minutes), because some of the combinations it draws are heavy (400 trees using half the features at each split, on one core each). XGBoost's search takes 2 to 5 minutes and logistic regression's about a minute. Timing the forest once more for the comparison table adds 2 to 3.5 minutes.
+
+During a full search, the terminal or the notebook may print a few `KeyError` lines mentioning a `joblib_memmapping_folder`. They come from joblib, the library that runs the parallel fits, failing to delete a temporary folder on Windows when its workers shut down. They do not affect the results; the run completes normally.
+
+Every later phase needs the tuned models, and we will run the notebook many times while working on them. Paying 35 minutes each time was not reasonable, so we added a cache.
+
+## The cache
+
+The idea is simple: the first run does the searches and saves their results to disk, and later runs reload them instead of searching again. The code is in `src/cache.py`, and the saved files go to a new `models/` folder.
+
+The danger with any cache is reusing a result that no longer matches the code or the data. Imagine we change a cleaning rule in phase 6: if the notebook silently reloaded models tuned on the old data, every number after that would be wrong, and nothing would tell us. To prevent this, each saved file carries a fingerprint. It is a hash, a short code computed from everything that can change the result of a search:
+
+- the content of the training data, value by value, including the labels, the column names and the row order;
+- the search range of the model;
+- the seed, the number of folds, the number of random combinations and the scoring metric;
+- the pipeline itself (preprocessing and model settings);
+- the versions of scikit-learn and XGBoost.
+
+When the notebook asks for a search, the fingerprint of the current inputs is computed and compared with the one stored in the file. If they match, the saved search is reloaded. If anything differs, even one value in one row, the fingerprints differ and the search runs again, then overwrites the file. We checked this on a small example: changing one value, one label, the order of the rows or the search range each produced a different fingerprint.
+
+The timings for the comparison table are cached the same way. A reloaded timing is the one measured on the run that produced it, and the notebook says so.
+
+There is one switch, in `src/config.py`:
+
+```python
+RETUNE = False
+```
+
+With `False`, the cache is used when it matches. With `True`, it is ignored and every search runs from scratch. Before handing the project in, we will set it to `True` and run the whole notebook once, so that the submitted results come from a complete, uninterrupted run.
+
+The `models/` folder is not versioned: saved searches are large, and anyone can rebuild them by running the notebook. On a fresh clone of the repository the cache is empty, so the first run takes the full 35 minutes. The notebook prints, for each model, whether its search was computed or reloaded, and how long the original search took.
 
 ## Checking it yourself
 
-With the virtual environment active, start JupyterLab, open the notebook and run all cells, as in phase 1. The best settings and the scores should come out identical, since every seed is fixed. Training and inference times will differ slightly from run to run and from machine to machine.
+With the virtual environment active, start JupyterLab, open the notebook and run all cells, as in phase 1. On the first run on a machine, expect 20 to 35 minutes. Run it again and section 3 should take seconds and report that each search was reloaded from the cache. We did exactly this: the second run of the whole notebook took 15 seconds, and every score and setting was identical to the run before. The best settings and scores are the same whether computed or reloaded, since every seed is fixed. Training and inference times differ slightly between machines.
