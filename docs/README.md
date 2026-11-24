@@ -10,3 +10,4 @@ For a single read from start to finish, [project-guide.pdf](project-guide.pdf) g
 - [03 - First look at the data](03-first-look-at-the-data.md): what the raw files contain, the problems found (duplicates, leaking `id`, overlap between files, suspicious TTL), and the published analysis we cite.
 - [04 - Cleaning and splitting the data](04-cleaning-and-split.md): the cleaning rules, why they run in that order, the three final sets and the encoding.
 - [05 - Training and tuning the three models](05-models.md): the common protocol, the hyperparameter searches, the results and what they mean.
+- [06 - Evaluating the models](06-evaluation.md): threshold choice, test results, why precision collapses on the test file, and the cost of errors.
