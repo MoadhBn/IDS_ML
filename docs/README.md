@@ -12,3 +12,4 @@ For a single read from start to finish, [project-guide.pdf](project-guide.pdf) g
 - [05 - Training and tuning the three models](05-models.md): the common protocol, the hyperparameter searches, the results and what they mean.
 - [06 - Evaluating the models](06-evaluation.md): threshold choice, test results, why precision collapses on the test file, and the cost of errors.
 - [07 - What the model relies on: three importance measures](07-global-importance.md): internal, permutation and SHAP importance compared, the weight of the TTL features, and why the rankings differ.
+- [08 - Five alerts explained one by one](08-local-explanations.md): two true positives, two false positives and a false negative, with SHAP charts and analyst notes.

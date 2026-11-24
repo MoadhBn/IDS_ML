@@ -148,6 +148,78 @@ def mean_abs_shap(values, pipeline):
 
 
 # ---------------------------------------------------------------------------
+# Local explanations
+# ---------------------------------------------------------------------------
+def outcome(y_true, scores, threshold):
+    """Label each flow as VP, FP, FN or VN (true/false positive/negative)."""
+    pred = scores >= threshold
+    y = np.asarray(y_true) == 1
+    return np.select([pred & y, pred & ~y, ~pred & y], ["VP", "FP", "FN"], default="VN")
+
+
+def pick_cases(X_sample, y_sample, families, scores, threshold, seed=config.SEED):
+    """Choose the five flows to explain, with fixed, stated rules.
+
+    - two true positives from two different attack families: the two most
+      common families among the true positives of the sample;
+    - two false positives: one with sttl = 254 and one with sttl = 62, the two
+      groups that produce the false alerts (section 4.4);
+    - one false negative.
+    Within each group the flow is drawn at random with the project seed, so
+    the choice is reproducible and not hand-picked.
+    """
+    rng = np.random.default_rng(seed)
+    kinds = pd.Series(outcome(y_sample, scores, threshold), index=X_sample.index)
+    fam = pd.Series(np.asarray(families), index=X_sample.index)
+
+    def draw(mask):
+        candidates = X_sample.index[mask]
+        return candidates[rng.integers(len(candidates))]
+
+    cases = {}
+    tp = kinds == "VP"
+    for i, family in enumerate(fam[tp].value_counts().index[:2], start=1):
+        cases[f"VP {i} ({family})"] = draw(tp & (fam == family))
+    fp = kinds == "FP"
+    cases["FP 1 (sttl = 254)"] = draw(fp & (X_sample["sttl"] == 254))
+    cases["FP 2 (sttl = 62)"] = draw(fp & (X_sample["sttl"] == 62))
+    fn_idx = draw(kinds == "FN")
+    cases[f"FN ({fam[fn_idx]})"] = fn_idx
+    return cases, kinds
+
+
+def explanation_for(row_position, values, base, pipeline, X_sample):
+    """A SHAP Explanation for one flow, per original feature, with readable values."""
+    grouped = group_columns(values[row_position], pipeline).iloc[0]
+    raw = X_sample.iloc[row_position][grouped.index]
+    # Round decimals so the figure stays readable (e.g. 38466.02734 -> 38466.03).
+    def tidy(v):
+        if isinstance(v, (int, float, np.integer, np.floating)):
+            f = float(v)
+            return int(f) if f.is_integer() else round(f, 3)
+        return v
+    readable = [tidy(v) for v in raw]
+    return shap.Explanation(values=grouped.to_numpy(), base_values=base,
+                            data=np.array(readable, dtype=object), feature_names=list(grouped.index))
+
+
+def contribution_table(expl, top=8):
+    """The largest contributions of one explanation, as a table."""
+    df = pd.DataFrame({"valeur": expl.data, "contribution": expl.values}, index=expl.feature_names)
+    return df.reindex(df["contribution"].abs().sort_values(ascending=False).index).head(top)
+
+
+def plot_waterfall(expl, title, filename=None, max_display=10):
+    import matplotlib.pyplot as plt
+    shap.plots.waterfall(expl, max_display=max_display, show=False)
+    plt.title(title)
+    plt.tight_layout()
+    if filename:
+        plt.savefig(config.FIGURES / filename, dpi=150, bbox_inches="tight")
+    plt.show()
+
+
+# ---------------------------------------------------------------------------
 # Comparing the rankings
 # ---------------------------------------------------------------------------
 def ranking_table(measures, top=15):
