@@ -20,7 +20,8 @@ ids-explainability/
 │   ├── preprocessing.py    one-hot encoding and scaling (phase 1)
 │   ├── models.py           pipelines, hyperparameter search, timing (phase 2)
 │   ├── cache.py            saving and reloading the searches (phase 2)
-│   └── evaluation.py       threshold, metrics, curves, confusion matrices (phase 3)
+│   ├── evaluation.py       threshold, metrics, curves, confusion matrices (phase 3)
+│   └── explain.py          importance measures and SHAP (phase 4)
 ├── models/                 cached searches and timings (not versioned)
 ├── scripts/
 │   ├── check_env.py        checks installed library versions
